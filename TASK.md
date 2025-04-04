@@ -73,4 +73,4 @@ python -m pytest tests/ -v --cov=modules
 
 ## 📝 Change Log
 - 2025-04-15: Created task file
-- 2025-04-16: Added technical specs 
+- 2025-04-16: Added technical specs

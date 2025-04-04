@@ -1,0 +1,12 @@
+{
+  "tasks": [
+    {
+      "name": "pinterest_affiliate_daily_post",
+      "command": "python main.py",
+      "schedule": "0 9 * * *",
+      "timezone": "UTC",
+      "enabled": true,
+      "description": "Run Pinterest Affiliate Automation AI daily at 9AM UTC"
+    }
+  ]
+}

@@ -32,9 +32,10 @@ ENV/
 .vscode/
 *.swp
 *.swo
+.cursor/
 
 # Project specific
 *.log
 .coverage
 htmlcov/
-.pytest_cache/ 
+.pytest_cache/

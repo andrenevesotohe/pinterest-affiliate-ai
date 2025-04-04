@@ -31,7 +31,7 @@ BEAUTY_CATEGORIES = {
     },
     "haircare": {
         "keywords": ["mask", "repair", "curls"],
-        "color_palette": "golden tones", 
+        "color_palette": "golden tones",
         "props": "wooden brush, silk scarf"
     }
 }
@@ -39,7 +39,7 @@ BEAUTY_CATEGORIES = {
 
 ### ⚠️ Prohibited Claims
 ```text
-- "Miracle cure" 
+- "Miracle cure"
 - "Instant results"
 - "Dermatologist-recommended" (without proof)
 - Before/after comparisons
@@ -77,7 +77,7 @@ DISCLOSURE_TEXTS = {
 ```python
 PROMPT_TEMPLATE = """
 Create Pinterest-optimized vertical image (2:3) showing {product} with:
-- {color_palette} color scheme  
+- {color_palette} color scheme
 - {props} as decorative elements
 - {lighting} lighting
 - Minimalist composition
@@ -124,4 +124,4 @@ graph LR
 2. **Debugging**:
    ```bash
    python -m pytest tests/ --cov=modules --cov-report=html
-   ``` 
+   ```

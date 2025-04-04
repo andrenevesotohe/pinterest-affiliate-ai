@@ -47,4 +47,4 @@ gantt
 if cost_tracker > daily_limit:
     system.send_alert()
     sys.exit(1)
-``` 
+```

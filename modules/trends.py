@@ -1,3 +1,7 @@
+"""
+Pinterest Trend Analyzer Module
+"""
+
 import os
 import requests
 from typing import List, Dict, Optional
@@ -15,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 class TrendAnalyzer:
     def __init__(self):
-        self.pinterest_token = os.getenv("PINTEREST_API_KEY")
+        self.pinterest_token = os.getenv("PINTEREST_ACCESS_TOKEN")
         self.beauty_keywords = {
             'skincare': {'serum', 'moisturizer', 'retinol', 'SPF', 'glow'},
             'haircare': {'shampoo', 'conditioner', 'mask', 'scalp', 'curls'},
@@ -27,6 +31,10 @@ class TrendAnalyzer:
     @limits(calls=5, period=60)  # Pinterest API rate limit
     def get_pinterest_trends(self) -> List[Dict]:
         """Fetches raw trending data from Pinterest API"""
+        if not self._check_token_valid():
+            logger.error("Invalid Pinterest API token")
+            return []
+
         url = "https://api.pinterest.com/v5/trending/topics"
         headers = {"Authorization": f"Bearer {self.pinterest_token}"}
         params = {
@@ -44,10 +52,10 @@ class TrendAnalyzer:
             logger.error(f"Pinterest API error: {str(e)}")
             return []
 
-    def filter_beauty_trends(self, trends: List[Dict]) -> List[str]:
+    def filter_beauty_trends(self, trends: List[Dict]) -> List[Dict]:
         """Filters trends to only beauty-related with keyword matching"""
         valid_trends = []
-        
+
         for trend in trends:
             trend_query = trend.get('query', '').lower()
             for category, keywords in self.beauty_keywords.items():
@@ -58,40 +66,41 @@ class TrendAnalyzer:
                         'volume': trend.get('volume', 0)
                     })
                     break
-        
+
         # Sort by descending popularity
         return sorted(valid_trends, key=lambda x: x['volume'], reverse=True)
 
     def get_daily_beauty_trends(self, max_trends: int = 5) -> List[Dict]:
         """Main method to get top beauty trends"""
         if not self._check_token_valid():
-            raise ValueError("Invalid Pinterest API token")
-        
+            logger.error("Invalid Pinterest API token")
+            return []
+
         raw_trends = self.get_pinterest_trends()
         if not raw_trends:
             logger.warning("No trends fetched from API")
             return []
-            
+
         beauty_trends = self.filter_beauty_trends(raw_trends)
-        
+
         # Apply additional filters
         filtered = [
-            t for t in beauty_trends 
+            t for t in beauty_trends
             if not self._is_blacklisted(t['query'])
         ][:max_trends]
-        
+
         logger.info(f"Found {len(filtered)} beauty trends")
         return filtered
 
     def _check_token_valid(self) -> bool:
         """Validates API token format"""
         token = self.pinterest_token or ""
-        return token.startswith("pinterest_") and len(token) > 30
+        return token.startswith("pina_") and len(token) > 30
 
     def _is_blacklisted(self, query: str) -> bool:
         """Filters out unwanted trends"""
         blacklist = {
-            'sale', 'discount', 'free', 'cheap', 
+            'sale', 'discount', 'free', 'cheap',
             'tutorial', 'how to', 'DIY'
         }
         query_words = set(query.split())
@@ -100,7 +109,7 @@ class TrendAnalyzer:
 # Example usage
 if __name__ == "__main__":
     analyzer = TrendAnalyzer()
-    
+
     try:
         trends = analyzer.get_daily_beauty_trends()
         print("Top Beauty Trends:")
@@ -108,4 +117,4 @@ if __name__ == "__main__":
             print(f"{i}. {trend['query']} ({trend['category']}) - Volume: {trend['volume']}")
     except Exception as e:
         logger.error(f"Trend analysis failed: {str(e)}")
-        raise 
+        raise
