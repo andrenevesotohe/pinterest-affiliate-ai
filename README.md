@@ -1,136 +1,239 @@
 # Pinterest Affiliate AI
 
-Automated Pinterest posting with AI-generated beauty content.
-
-## Overview
-
-This project automates the creation and posting of beauty-related content to Pinterest, leveraging AI to generate engaging posts and manage affiliate links.
+An automated system for generating and posting beauty content to Pinterest with affiliate links.
 
 ## Features
 
-- AI-powered content generation
-- Automated Pinterest posting
-- Amazon affiliate link integration
-- Trend analysis and optimization
-- Safety checks and rate limiting
-- Scheduled daily execution
+- **Trend Analysis**: Automatically identifies beauty trends on Pinterest
+- **Content Generation**: Creates high-quality images and captions using DALL-E and GPT-3.5
+- **Affiliate Integration**: Adds Amazon affiliate links to posts
+- **Budget Management**: Tracks and limits DALL-E API usage
+- **Resilient Posting**: Handles API failures with retry logic and fallback queue
+- **Maintenance Tools**: Includes scripts for log rotation, budget reset, and diagnostics
 
-## Setup
+## Installation
 
 1. Clone the repository:
-```bash
-git clone https://github.com/your-username/pinterest-affiliate-ai.git
-cd pinterest-affiliate-ai
-```
+   ```
+   git clone https://github.com/yourusername/pinterest-affiliate.git
+   cd pinterest-affiliate
+   ```
 
-2. Create and activate virtual environment:
-```bash
-python -m venv .venv
-source .venv/bin/activate  # Linux/Mac
-.venv\Scripts\activate    # Windows
-```
+2. Create a virtual environment:
+   ```
+   python -m venv .venv
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+   ```
 
 3. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
+   ```
+   pip install -r requirements.txt
+   ```
 
-4. Configure environment variables:
-Create a `.env` file with:
-```
-OPENAI_API_KEY="your-key-here"
-PINTEREST_ACCESS_TOKEN="your-token"
-AMAZON_ASSOCIATE_TAG="your-tag"
-PINTEREST_BOARD_ID="your-board-id"
-```
+4. Copy the example environment file and fill in your API keys:
+   ```
+   cp .env.example .env
+   ```
 
-## Project Structure
+## Configuration
+
+Edit the `.env` file with your API keys and settings:
 
 ```
-.
-├── .github/
-│   └── workflows/
-│       ├── pytest.yml
-│       └── schedule.yml
-├── .venv/
-├── tests/
-├── modules/
-│   ├── __init__.py
-│   ├── trends.py
-│   ├── poster.py
-│   └── content_generator.py
-├── config/
-├── .env
-├── .gitignore
-├── LICENSE
-├── README.md
-├── main.py
-├── scheduler.py
-├── scheduler.json
-└── requirements.txt
+OPENAI_API_KEY=your_openai_api_key
+PINTEREST_TOKEN=your_pinterest_token
+PINTEREST_BOARD_ID=your_pinterest_board_id
+AMAZON_ASSOCIATE_TAG=your_amazon_associate_tag
+SMTP_SERVER=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USERNAME=your_email@gmail.com
+SMTP_PASSWORD=your_app_password
+NOTIFICATION_EMAIL=your_notification_email
 ```
 
-## Scheduled Execution
+## Usage
 
-The project includes a scheduler that runs the Pinterest posting process daily at 9AM UTC.
+### Daily Posting
 
-### Using the Scheduler
+Run the system to automatically post content:
 
-1. Start the scheduler:
-```bash
+```
+python main.py
+```
+
+### Test Mode
+
+Run in test mode without actually posting:
+
+```
+python main.py --test-mode
+```
+
+### Dry Run
+
+Run without posting to Pinterest:
+
+```
+python main.py --dry-run
+```
+
+### Limited Posts
+
+Limit the number of posts:
+
+```
+python main.py --limit 3
+```
+
+### Budget Control
+
+Set a maximum DALL-E budget:
+
+```
+python main.py --budget 0.12
+```
+
+## Maintenance
+
+### Daily Maintenance
+
+Run all daily maintenance tasks:
+
+```
+python scripts/maintenance.py --daily
+```
+
+### Log Rotation
+
+Rotate log files:
+
+```
+python scripts/maintenance.py --rotate-logs
+```
+
+### Budget Reset
+
+Reset the DALL-E budget:
+
+```
+python scripts/maintenance.py --reset-budget
+```
+
+### Process Fallback Queue
+
+Process the fallback queue:
+
+```
+python scripts/maintenance.py --process-queue
+```
+
+### Check Affiliate Links
+
+Check affiliate links for validity:
+
+```
+python scripts/maintenance.py --check-links
+```
+
+## Diagnostics
+
+Run diagnostics on the last execution:
+
+```
+python scripts/diagnose.py --last-run
+```
+
+## Testing
+
+Run the test suite:
+
+```
+python -m pytest tests/ -v
+```
+
+Run with coverage:
+
+```
+python -m pytest tests/ -v --cov=modules --cov-report=html
+```
+
+## Scheduling
+
+The system includes a scheduler for automated tasks:
+
+```
 python scheduler.py
 ```
 
-2. The scheduler will run in the background and execute the daily posting task at the scheduled time.
+Tasks are configured in `scheduler.json`:
 
-3. You can modify the schedule in `scheduler.json`:
 ```json
 {
   "tasks": [
     {
       "name": "pinterest_affiliate_daily_post",
       "command": "python main.py",
-      "schedule": "0 9 * * *",  # Daily at 9AM UTC
+      "schedule": "0 9 * * *",
       "timezone": "UTC",
-      "enabled": true
+      "enabled": true,
+      "description": "Run Pinterest Affiliate Automation AI daily at 9AM UTC"
+    },
+    {
+      "name": "validate_affiliate_links",
+      "command": "python scripts/check_affiliate_links.py --notify",
+      "schedule": "0 8 * * *",
+      "timezone": "UTC",
+      "enabled": true,
+      "description": "Validate affiliate links daily at 8AM UTC"
+    },
+    {
+      "name": "process_fallback_queue",
+      "command": "python scripts/process_fallback.py",
+      "schedule": "0 */4 * * *",
+      "timezone": "UTC",
+      "enabled": true,
+      "description": "Process fallback queue every 4 hours"
+    },
+    {
+      "name": "check_gpt_usage",
+      "command": "python scripts/check_gpt_usage.py",
+      "schedule": "0 0 * * *",
+      "timezone": "UTC",
+      "enabled": true,
+      "description": "Check GPT usage daily at midnight UTC"
     }
   ]
 }
 ```
 
-### Running as a Service
+## Project Structure
 
-For production use, you can set up the scheduler as a system service:
-
-#### Linux (systemd)
-Create a file at `/etc/systemd/system/pinterest-affiliate.service`:
 ```
-[Unit]
-Description=Pinterest Affiliate AI Scheduler
-After=network.target
-
-[Service]
-User=your-username
-WorkingDirectory=/path/to/pinterest-affiliate
-ExecStart=/path/to/pinterest-affiliate/.venv/bin/python scheduler.py
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
+pinterest-affiliate/
+├── modules/                  # Core modules
+│   ├── budget_tracker.py     # DALL-E budget tracking
+│   ├── content_generator.py  # Content generation
+│   ├── dalle_generator.py    # DALL-E image generation
+│   ├── poster.py             # Pinterest posting
+│   ├── text_generator.py     # GPT-3.5 text generation
+│   └── trends.py             # Trend analysis
+├── scripts/                  # Utility scripts
+│   ├── check_affiliate_links.py  # Affiliate link validation
+│   ├── check_gpt_usage.py        # GPT usage tracking
+│   ├── diagnose.py               # Diagnostics
+│   ├── maintenance.py            # Maintenance tasks
+│   ├── process_fallback.py       # Fallback queue processing
+│   ├── run_tests.py              # Test runner
+│   └── verify_environment.py     # Environment verification
+├── tests/                    # Test suite
+├── .env                      # Environment variables
+├── .env.example              # Example environment file
+├── main.py                   # Main script
+├── README.md                 # Documentation
+├── requirements.txt          # Dependencies
+└── scheduler.json            # Scheduler configuration
 ```
-
-Then enable and start the service:
-```bash
-sudo systemctl enable pinterest-affiliate
-sudo systemctl start pinterest-affiliate
-```
-
-## Development
-
-- Create feature branches from `dev`
-- Run tests before committing: `python -m pytest tests/ -v`
-- Follow the protected branch workflow
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the LICENSE file for details.

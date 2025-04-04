@@ -1,8 +1,17 @@
-openai>=1.0
-requests>=2.31
-python-dotenv>=1.0
-ratelimit>=2.2
-Pillow>=10.0
-pytest>=7.4
-schedule>=1.2.0
-pytz>=2023.3
+# Core dependencies
+openai>=1.0.0
+requests>=2.26.0
+python-dotenv>=0.19.0
+tenacity==8.0.0
+ratelimit>=2.2.1
+Pillow>=10.0.0
+
+# Testing
+pytest>=7.0.0
+pytest-cov>=3.0.0
+
+# Utilities
+python-dateutil>=2.8.2
+schedule>=1.1.0
+beautifulsoup4>=4.9.3
+lxml>=4.9.0

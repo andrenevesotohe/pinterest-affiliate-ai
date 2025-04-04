@@ -3,10 +3,15 @@ import os
 import re
 import time
 import requests
-from typing import Dict, Optional, Tuple
+import argparse
+from typing import Dict, Optional, Tuple, List
 from urllib.parse import urlparse, parse_qs
 import logging
 from dotenv import load_dotenv
+import json
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 # Load environment variables
 load_dotenv()
@@ -90,24 +95,95 @@ class AffiliateLinkValidator:
             time.sleep(0.5)  # Rate limiting
         return results
 
+def send_notification(invalid_links: List[Dict]) -> None:
+    """Send email notification about invalid affiliate links."""
+    if not invalid_links:
+        return
+        
+    smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+    smtp_username = os.getenv("SMTP_USERNAME")
+    smtp_password = os.getenv("SMTP_PASSWORD")
+    recipient_email = os.getenv("NOTIFICATION_EMAIL")
+    
+    if not all([smtp_username, smtp_password, recipient_email]):
+        logger.warning("Missing email configuration, cannot send notification")
+        return
+    
+    try:
+        msg = MIMEMultipart()
+        msg['From'] = smtp_username
+        msg['To'] = recipient_email
+        msg['Subject'] = "Affiliate Link Validation Alert"
+        
+        body = "The following affiliate links failed validation:\n\n"
+        for link in invalid_links:
+            body += f"- {link['name']}: {link['url']} (Network: {link['network']})\n"
+        
+        msg.attach(MIMEText(body, 'plain'))
+        
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()
+        server.login(smtp_username, smtp_password)
+        server.send_message(msg)
+        server.quit()
+        
+        logger.info(f"Notification sent to {recipient_email}")
+    except Exception as e:
+        logger.error(f"Failed to send notification: {e}")
+
+def load_links_from_file(file_path: str) -> Dict[str, str]:
+    """Load affiliate links from a JSON file."""
+    try:
+        with open(file_path, 'r') as f:
+            return json.load(f)
+    except Exception as e:
+        logger.error(f"Error loading links from {file_path}: {e}")
+        return {}
+
 def main():
+    parser = argparse.ArgumentParser(description='Validate affiliate links')
+    parser.add_argument('--notify', action='store_true', help='Send notification for invalid links')
+    parser.add_argument('--full-scan', action='store_true', help='Perform a full scan of all links')
+    parser.add_argument('--file', type=str, help='JSON file containing links to validate')
+    args = parser.parse_args()
+
     validator = AffiliateLinkValidator()
 
-    # Example links - replace with your actual links
-    test_links = {
-        "amazon_good": "https://www.amazon.com/dp/B08N5KWB9H/?tag=yourtag-20",
-        "amazon_bad": "https://www.amazon.com/dp/B08N5KWB9H/?tag=competitor-21",
-        "cj_good": "https://www.anrdoezrs.net/click?pid=123456&offerid=123",
-        "shareasale_bad": "https://www.shareasale.com/r.cfm?aff=999"
-    }
+    # Load links from file or use example links
+    if args.file:
+        links = load_links_from_file(args.file)
+    else:
+        # Example links - replace with your actual links
+        links = {
+            "amazon_good": "https://www.amazon.com/dp/B08N5KWB9H/?tag=yourtag-20",
+            "amazon_bad": "https://www.amazon.com/dp/B08N5KWB9H/?tag=competitor-21",
+            "cj_good": "https://www.anrdoezrs.net/click?pid=123456&offerid=123",
+            "shareasale_bad": "https://www.shareasale.com/r.cfm?aff=999"
+        }
 
-    results = validator.check_batch(test_links)
+    results = validator.check_batch(links)
 
     # Print results
     print("\nAffiliate Link Validation Results:")
+    invalid_links = []
     for name, (is_valid, network) in results.items():
         status = "[OK]" if is_valid else "[X]"
-        print(f"{status} {name.ljust(15)} {network.ljust(10)} {test_links[name]}")
+        print(f"{status} {name.ljust(15)} {network.ljust(10)} {links[name]}")
+        
+        if not is_valid:
+            invalid_links.append({
+                "name": name,
+                "url": links[name],
+                "network": network
+            })
+
+    # Send notification if requested and there are invalid links
+    if args.notify and invalid_links:
+        send_notification(invalid_links)
+        
+    # Log summary
+    logger.info(f"Validation complete: {len(links) - len(invalid_links)} valid, {len(invalid_links)} invalid")
 
 if __name__ == "__main__":
     main()

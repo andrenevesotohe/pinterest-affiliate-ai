@@ -7,6 +7,46 @@
       "timezone": "UTC",
       "enabled": true,
       "description": "Run Pinterest Affiliate Automation AI daily at 9AM UTC"
+    },
+    {
+      "name": "validate_affiliate_links",
+      "command": "python scripts/check_affiliate_links.py --notify",
+      "schedule": "0 8 * * *",
+      "timezone": "UTC",
+      "enabled": true,
+      "description": "Validate affiliate links daily at 8AM UTC"
+    },
+    {
+      "name": "process_fallback_queue",
+      "command": "python scripts/process_queue.py",
+      "schedule": "0 */4 * * *",
+      "timezone": "UTC",
+      "enabled": true,
+      "description": "Process fallback queue every 4 hours"
+    },
+    {
+      "name": "check_gpt_usage",
+      "command": "python scripts/check_gpt_usage.py",
+      "schedule": "0 0 * * *",
+      "timezone": "UTC",
+      "enabled": true,
+      "description": "Check GPT usage daily at midnight UTC"
+    },
+    {
+      "name": "refresh_pinterest_token",
+      "command": "python scripts/refresh_token.py",
+      "schedule": "0 0 1 * *",
+      "timezone": "UTC",
+      "enabled": true,
+      "description": "Refresh Pinterest token on the 1st of every month"
+    },
+    {
+      "name": "budget_alerts",
+      "command": "python scripts/budget_alerts.py",
+      "schedule": "0 18 * * *",
+      "timezone": "UTC",
+      "enabled": true,
+      "description": "Check budget limits and send alerts daily at 6PM UTC"
     }
   ]
 }
